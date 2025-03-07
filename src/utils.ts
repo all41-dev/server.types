@@ -8,11 +8,11 @@ export class Utils {
   private static _inst: Utils;
   private logger?: Logger;
 
-  public static get inst(): Utils { return Utils._inst || (Utils._inst = new Utils()); }
-
   private constructor(logger?: Logger) {
     this.logger = logger;
   }
+
+  public static get inst(): Utils { return Utils._inst || (Utils._inst = new Utils()); }
 
 
   public dateToDateTime<T extends any | Array<any>>(obj: T): T {
@@ -35,8 +35,6 @@ export class Utils {
   public handleCatch(error: Error, res: Response) {
     if (this.logger) {
       this.logger.error(error.message, { error });
-    } else {
-      console.error(error.message, error);
     }
     res.status(500).send({ error: error.message });
   }
