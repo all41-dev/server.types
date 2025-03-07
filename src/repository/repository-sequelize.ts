@@ -16,6 +16,8 @@ import {
   IRepositoryWritableDb,
 } from "./repository";
 import { Utils } from "../utils";
+//Todo: remove the use of library db-tools
+import { Db } from '@all41-dev/db-tools';
 
 export class RepositorySequelize<T extends Model<T> & IPkName<T>>
   implements Repository<T>, IRepositoryReadable<T>, IRepositoryWritableDb<T> {
@@ -24,7 +26,7 @@ export class RepositorySequelize<T extends Model<T> & IPkName<T>>
     options?: BuildOptions
   ) => T;
   public readonly dbName?: string;
-  protected sequelizeInstances: any[] = [];
+  protected readonly _dbs: Db<any>[] = [];
 
   /**
    *
@@ -41,26 +43,18 @@ export class RepositorySequelize<T extends Model<T> & IPkName<T>>
     this.modelType = type;
     this.dbName = dbName;
   }
-
   protected get _sequelizeRepository(): SequelizeNativeRepository<T> {
-    const sequelizeInstance = this.sequelizeInstances.find((sequelize) =>
-      this.dbName ? sequelize.getDatabaseName() === this.dbName : true
-    );
-
-    if (!sequelizeInstance) {
-      throw new Error(`Database '${this.dbName || "default"}' not found.`);
-    }
-    const repository = sequelizeInstance.getRepository(this.modelType);
-
-    if (!repository) {
+    const sequelizeRepository = this._dbs
+      .find((db) =>
+        this.dbName ? db.sequelize.getDatabaseName() === this.dbName : true
+      )
+      ?.sequelize.getRepository(this.modelType);
+    if (!sequelizeRepository)
       throw new Error(
         `Repository for '${this.modelType.prototype.constructor.name}' not found`
       );
-    }
-
-    return repository;
+    return sequelizeRepository;
   }
-
 
   public async post(object: T): Promise<T> {
     return await this._sequelizeRepository.create(object as any);
