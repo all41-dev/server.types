@@ -9,15 +9,14 @@ import {
   Utils as SQLUtils,
   Includeable,
 } from "sequelize";
+import { Server } from "../../../server/src/server";
 import {
   IPkName,
   Repository,
   IRepositoryReadable,
   IRepositoryWritableDb,
 } from "./repository";
-import { Utils } from "../utils";
-//Todo: remove the use of library db-tools
-import { Db } from '@all41-dev/db-tools';
+import { Utils } from "../../../server/src/utils";
 
 export class RepositorySequelize<T extends Model<T> & IPkName<T>>
   implements Repository<T>, IRepositoryReadable<T>, IRepositoryWritableDb<T> {
@@ -25,8 +24,7 @@ export class RepositorySequelize<T extends Model<T> & IPkName<T>>
     values?: SQLUtils.MakeNullishOptional<T> | Partial<T>,
     options?: BuildOptions
   ) => T;
-  public readonly dbName?: string;
-  protected readonly _dbs: Db<any>[] = [];
+  public _repository: SequelizeNativeRepository<T> | undefined;
 
   /**
    *
@@ -38,22 +36,19 @@ export class RepositorySequelize<T extends Model<T> & IPkName<T>>
       values?: SQLUtils.MakeNullishOptional<T> | Partial<T>,
       options?: BuildOptions
     ) => T,
-    dbName?: string
+    repository: SequelizeNativeRepository<T>
   ) {
     this.modelType = type;
-    this.dbName = dbName;
+    this._repository = repository;
   }
+
   protected get _sequelizeRepository(): SequelizeNativeRepository<T> {
-    const sequelizeRepository = this._dbs
-      .find((db) =>
-        this.dbName ? db.sequelize.getDatabaseName() === this.dbName : true
-      )
-      ?.sequelize.getRepository(this.modelType);
-    if (!sequelizeRepository)
+
+    if (!this._repository)
       throw new Error(
         `Repository for '${this.modelType.prototype.constructor.name}' not found`
       );
-    return sequelizeRepository;
+    return this._repository;
   }
 
   public async post(object: T): Promise<T> {
