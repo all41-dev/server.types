@@ -9,14 +9,13 @@ import {
   Utils as SQLUtils,
   Includeable,
 } from "sequelize";
-import { Server } from "../../../server/src/server";
 import {
   IPkName,
   Repository,
   IRepositoryReadable,
   IRepositoryWritableDb,
 } from "./repository";
-import { Utils } from "../../../server/src/utils";
+import { Utils } from "../utils";
 
 export class RepositorySequelize<T extends Model<T> & IPkName<T>>
   implements Repository<T>, IRepositoryReadable<T>, IRepositoryWritableDb<T> {
