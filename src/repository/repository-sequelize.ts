@@ -17,8 +17,7 @@ import {
 } from "./repository";
 import { Utils } from "../utils";
 
-export class RepositorySequelize<T extends Model<T> & IPkName<T>>
-  implements Repository<T>, IRepositoryReadable<T>, IRepositoryWritableDb<T> {
+export class RepositorySequelize<T extends Model<T> & IPkName<T>> implements Repository<T>, IRepositoryReadable<T>, IRepositoryWritableDb<T> {
   public readonly modelType: new (
     values?: SQLUtils.MakeNullishOptional<T> | Partial<T>,
     options?: BuildOptions
@@ -28,7 +27,7 @@ export class RepositorySequelize<T extends Model<T> & IPkName<T>>
   /**
    *
    * @param type Model type
-   * @param dbName database name (from Server.dbs.dbName value)
+   * @param repository Sequelize repository
    */
   constructor(
     type: new (
