@@ -1,15 +1,36 @@
 import { DateTime } from "luxon";
 import { Response } from "express";
 import { Model } from 'sequelize-typescript';
-import { Logger } from "winston";
+import winston from "winston";
 
 
 export class Utils {
   private static _inst: Utils;
-  private logger?: Logger;
+  private readonly logger: winston.Logger;
 
-  private constructor(logger?: Logger) {
-    this.logger = logger;
+  private constructor() {
+    this.logger = winston.createLogger({
+      level: "info",
+      format: winston.format.json(),
+      levels: {
+        emerg: 0,
+        alert: 1,
+        crit: 2,
+        error: 3,
+        warning: 4,
+        notice: 5,
+        info: 6,
+        debug: 7
+      },
+      transports: [
+        new winston.transports.Console({
+          format: winston.format.combine(
+            winston.format.colorize(),
+            winston.format.simple()
+          )
+        })
+      ]
+    });
   }
 
   public static get inst(): Utils { return Utils._inst || (Utils._inst = new Utils()); }
@@ -35,9 +56,7 @@ export class Utils {
   public handleCatch(error: Error, res: Response) {
     // TODO: find a way to make the logger work 
     // Server.logger.error(error.message, error);
-    if (this.logger) {
-      this.logger.error(error.message, { error });
-    }
+    this.logger.error(error.message, error);
     res.status(500).send({ error: error.message });
   }
 }
