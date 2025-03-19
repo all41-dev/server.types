@@ -23,7 +23,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@all41-dev/db-tools": "^1.4.0",
     "@types/express": "^4.17.17",
     "express": "^4.19.2",
     "luxon": "^3.4.4",
