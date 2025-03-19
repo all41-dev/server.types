@@ -39,16 +39,23 @@ export class Utils {
   public dateToDateTime<T extends any | Array<any>>(obj: T): T {
     const localObj = obj as any;
     if (localObj instanceof Model) {
-      // limit conversion to datValues when object is of type Model
+      // Limit conversion to dataValues when object is of type Model
       localObj.dataValues = Utils.inst.dateToDateTime(localObj.dataValues);
     } else {
       Object.keys(localObj).forEach((key: any) => {
-        if (localObj[key] instanceof Date) localObj[key] = DateTime.fromJSDate(localObj[key]);
-        else if (Array.isArray(localObj[key])) localObj[key].forEach((elem: any) => {
-          if (typeof elem === 'object') Utils.inst.dateToDateTime(elem);
-          else if (elem instanceof Date) elem = DateTime.fromJSDate(elem);
-        })
-        else if (![undefined, null].includes(localObj[key]) && typeof localObj[key] === 'object') Utils.inst.dateToDateTime(localObj[key]);
+        if (localObj[key] instanceof Date) {
+          localObj[key] = DateTime.fromJSDate(localObj[key]);
+        } else if (Array.isArray(localObj[key])) {
+          localObj[key].forEach((elem: any, index: number) => {
+            if (elem instanceof Date) {
+              localObj[key][index] = DateTime.fromJSDate(elem);
+            } else if (typeof elem === 'object') {
+              Utils.inst.dateToDateTime(elem);
+            }
+          });
+        } else if (localObj[key] !== undefined && localObj[key] !== null && typeof localObj[key] === 'object') {
+          Utils.inst.dateToDateTime(localObj[key]);
+        }
       });
     }
     return localObj as T;
