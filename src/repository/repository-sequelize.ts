@@ -1,20 +1,6 @@
-import {
-  Model,
-  Repository as SequelizeNativeRepository,
-} from "sequelize-typescript";
-import {
-  FindOptions,
-  SaveOptions,
-  BuildOptions,
-  Utils as SQLUtils,
-  Includeable,
-} from "sequelize";
-import {
-  IPkName,
-  Repository,
-  IRepositoryReadable,
-  IRepositoryWritableDb,
-} from "./repository";
+import { Model, Repository as SequelizeNativeRepository, } from "sequelize-typescript";
+import { FindOptions, SaveOptions, BuildOptions, Utils as SQLUtils, Includeable, } from "sequelize";
+import { IPkName, Repository, IRepositoryReadable, IRepositoryWritableDb, } from "./repository";
 import { Utils } from "../utils";
 
 export class RepositorySequelize<T extends Model<T> & IPkName<T>> implements Repository<T>, IRepositoryReadable<T>, IRepositoryWritableDb<T> {
@@ -22,31 +8,25 @@ export class RepositorySequelize<T extends Model<T> & IPkName<T>> implements Rep
     values?: SQLUtils.MakeNullishOptional<T> | Partial<T>,
     options?: BuildOptions
   ) => T;
-  public _repository: SequelizeNativeRepository<T> | undefined;
-
   /**
    *
    * @param type Model type
-   * @param repository Sequelize repository
    */
   constructor(
     type: new (
       values?: SQLUtils.MakeNullishOptional<T> | Partial<T>,
       options?: BuildOptions
     ) => T,
-    repository: SequelizeNativeRepository<T>
   ) {
     this.modelType = type;
-    this._repository = repository;
   }
 
   protected get _sequelizeRepository(): SequelizeNativeRepository<T> {
-
-    if (!this._repository)
+    if (!this.modelType)
       throw new Error(
-        `Repository for '${this.modelType.prototype.constructor.name}' not found`
+        `Repository for '${this.modelType}' not found`
       );
-    return this._repository;
+    return this.modelType as SequelizeNativeRepository<T>;
   }
 
   public async post(object: T): Promise<T> {
