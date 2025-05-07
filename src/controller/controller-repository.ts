@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/member-ordering */
 import { Request, Response, Router } from 'express';
-import { ControllerBase, IControllerInstanceType, IRouteDefinition } from './controller-base';
+import { ControllerBase, IControllerInstanceType, IRouteDefinition, ControllerAuthOptions } from './controller-base';
 import { IPkName, IRepositoryReadable, IRepositoryWritable, Repository } from '../repository/repository';
 import { Utils } from '../utils';
 
@@ -11,10 +11,25 @@ export interface IControllerRepository<R extends Repository<T> & Partial<IReposi
 export class ControllerRepositoryReadWrite<R extends Repository<T> & IRepositoryReadable<T> & IRepositoryWritable<T>, T extends IPkName<T> = any> extends ControllerBase {
   private _repository!: R;
 
-  constructor() {
-    super();
-    this.defineRoutes(...new ControllerRepositoryReadonly<T, R>().routes);
-    this.defineRoutes(...new ControllerRepositoryWriteonly<T, R>().routes);
+  constructor(options?: ControllerAuthOptions) {
+    super(options);
+    const readonly = new ControllerRepositoryReadonly<T, R>();
+    const writeonly = new ControllerRepositoryWriteonly<T, R>();
+
+    const allBaseRoutes = [...readonly.routes, ...writeonly.routes];
+
+    const permissionedBaseRoutes = allBaseRoutes.map((route) => {
+      if (!this.options?.baseRouteCheck || !this.options?.checkRouteMiddleware) return route;
+      for (const entry of this.options.baseRouteCheck) {
+        if (entry.verb.toLowerCase() === route.verb.toLowerCase() && entry.path === route.path) {
+          route.featureCode = entry.featureCode
+          route.options = entry.optionsElement
+        }
+      }
+      return route
+    });
+
+    this.defineRoutes(...permissionedBaseRoutes);
   }
   public create(repoType: R | (new () => R), router?: Router): Router {
     if (!repoType) throw new Error('repoType not provided');
@@ -85,7 +100,7 @@ export class ControllerRepositoryWriteonly<T extends IPkName<T>, R extends Repos
       { verb: 'delete', path: "/:id", handlers: this.delete },
     );
   }
-  public create(repoType: new() => R, router?: Router) {
+  public create(repoType: new () => R, router?: Router) {
     this._repository = new repoType();
     const usedRouter = super.createBase(router);
 
