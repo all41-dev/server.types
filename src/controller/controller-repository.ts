@@ -19,11 +19,11 @@ export class ControllerRepositoryReadWrite<R extends Repository<T> & IRepository
     const allBaseRoutes = [...readonly.routes, ...writeonly.routes];
 
     const permissionedBaseRoutes = allBaseRoutes.map((route) => {
-      if (!this.options?.baseRouteCheck || !this.options?.checkRouteMiddleware) return route;
-      for (const entry of this.options.baseRouteCheck) {
+      if (!this.options?.baseRouteCheckAuth || !this.options?.checkRouteMiddleware) return route;
+      for (const entry of this.options.baseRouteCheckAuth) {
         if (entry.verb.toLowerCase() === route.verb.toLowerCase() && entry.path === route.path) {
           route.featureCode = entry.featureCode
-          route.options = entry.optionsElement
+          route.options = entry.options
         }
       }
       return route

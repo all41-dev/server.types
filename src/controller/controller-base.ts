@@ -16,12 +16,12 @@ export interface BaseRoutePermissionDefinition {
   verb: 'get' | 'post' | 'put' | 'delete' | 'patch';
   path: string;
   featureCode: string;
-  optionsElement?: Record<string, any>;
+  options?: Record<string, any>;
 }
 
 export interface ControllerAuthOptions {
-  checkRouteMiddleware?: (permissionKey: string, options: Record<string, any> | undefined) => RequestHandler;
-  baseRouteCheck?: BaseRoutePermissionDefinition[];
+  checkRouteMiddleware?: (featureCode: string, options?: Record<string, any>) => RequestHandler;
+  baseRouteCheckAuth?: BaseRoutePermissionDefinition[];
 }
 
 export abstract class ControllerBase {
