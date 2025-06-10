@@ -1,23 +1,12 @@
-import { Model, Repository as SequelizeNativeRepository, } from "sequelize-typescript";
-import { FindOptions, SaveOptions, BuildOptions, Utils as SQLUtils, Includeable, } from "sequelize";
+import { Model, ModelStatic, Repository as SequelizeNativeRepository, } from "sequelize-typescript";
+import { FindOptions, SaveOptions, Includeable, } from "sequelize";
 import { IPkName, Repository, IRepositoryReadable, IRepositoryWritableDb, } from "./repository";
 import { Utils } from "../utils";
 
 export class RepositorySequelize<T extends Model<T> & IPkName<T>> implements Repository<T>, IRepositoryReadable<T>, IRepositoryWritableDb<T> {
-  public readonly modelType: new (
-    values?: SQLUtils.MakeNullishOptional<T> | Partial<T>,
-    options?: BuildOptions
-  ) => T;
-  /**
-   *
-   * @param type Model type
-   */
-  constructor(
-    type: new (
-      values?: SQLUtils.MakeNullishOptional<T> | Partial<T>,
-      options?: BuildOptions
-    ) => T,
-  ) {
+  public readonly modelType: ModelStatic<T>;
+
+  constructor(type: ModelStatic<T>) {
     this.modelType = type;
   }
 
