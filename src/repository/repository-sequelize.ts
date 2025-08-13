@@ -69,7 +69,18 @@ export class RepositorySequelize<T extends Model<T> & IPkName<T>> implements Rep
     options?: SaveOptions<T>
   ): Promise<T> {
     const foundRecord = await this.getByKey(key);
+    const rawAttributes = (this.modelType as any).rawAttributes;
+    if (rawAttributes) {
+      const virtualAttrs = Object.entries(rawAttributes)
+        .filter(([_, attr]: any) => attr.type?.key === 'VIRTUAL')
+        .map(([name]) => name as keyof T);
 
+      for (const v of virtualAttrs) {
+        if (v in object) {
+          delete object[v];
+        }
+      }
+    }
     let result = await foundRecord.set(object).save();
     if (options) {
       result = await this.getByKey(options);
