@@ -19,6 +19,18 @@ export class RepositorySequelize<T extends Model<T> & IPkName<T>> implements Rep
   }
 
   public async post(object: T): Promise<T> {
+    const rawAttributes = (this.modelType as any).rawAttributes;
+    if (rawAttributes) {
+      const virtualAttrs = Object.entries(rawAttributes)
+        .filter(([_, attr]: any) => attr.type?.key === 'VIRTUAL')
+        .map(([name]) => name as keyof T);
+
+      for (const v of virtualAttrs) {
+        if (v in object) {
+          delete object[v];
+        }
+      }
+    }
     return await this._sequelizeRepository.create(object as any);
   }
   public async delete(key: any): Promise<void> {
@@ -57,8 +69,7 @@ export class RepositorySequelize<T extends Model<T> & IPkName<T>> implements Rep
     //   isAliased: true,
     // };
 
-    if (options?.include)
-      options.include = this._generateIncludes(options.include);
+    if (options?.include) options.include = this._generateIncludes(options.include);
     const result = await this._sequelizeRepository.findAll(options);
     Utils.inst.dateToDateTime(result);
     return result;
