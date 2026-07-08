@@ -6,3 +6,6 @@ export * from './repository/repository-amqp';
 export * from './repository/repository-sequelize';
 export * from "./workflow/workflow"
 export * from './utils';
+export * from './api';
+export * from './interfaces';
+export * from './ui';
