@@ -6,7 +6,7 @@ import winston from "winston";
 
 export class Utils {
   private static _inst: Utils;
-  private readonly logger: winston.Logger;
+  public readonly logger: winston.Logger;
 
   private constructor() {
     this.logger = winston.createLogger({
@@ -24,7 +24,7 @@ export class Utils {
   }
 
   public static get inst(): Utils { return Utils._inst || (Utils._inst = new Utils()); }
-
+  public static get logger(): winston.Logger { return (Utils._inst || (Utils._inst = new Utils())).logger; }
 
   public dateToDateTime<T extends any | Array<any>>(obj: T): T {
     const localObj = obj as any;
@@ -50,6 +50,7 @@ export class Utils {
     }
     return localObj as T;
   }
+
   public handleCatch(error: Error, res: Response) {
     // TODO: find a way to make the logger work
     // Server.logger.error(error.message, error);
