@@ -9,3 +9,4 @@ export * from './utils';
 export * from './api';
 export * from './interfaces';
 export * from './ui';
+export * from './entity-request';
