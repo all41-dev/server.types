@@ -51,7 +51,7 @@ export class Utils {
     return localObj as T;
   }
   public handleCatch(error: Error, res: Response) {
-    // TODO: find a way to make the logger work 
+    // TODO: find a way to make the logger work
     // Server.logger.error(error.message, error);
     this.logger.error(error.message, error);
     res.status(500).send({ error: error.message });

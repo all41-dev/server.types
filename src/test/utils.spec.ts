@@ -1,6 +1,7 @@
 import * as chai from 'chai';
 import { Utils } from '../utils';
 import { DateTime } from 'luxon';
+import 'mocha';
 
 describe('Utils class', () => {
   describe('dateToDateTime', () => {

@@ -13,6 +13,7 @@ export interface Workflow<T extends IPkName<T>, C extends WorkflowContext = Work
   context: C;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class Workflow<T extends IPkName<T>, C extends WorkflowContext = WorkflowContext> {
   public async run(): Promise<(T | void)[]> {
     const electedKeys = Object.keys(this.actions)

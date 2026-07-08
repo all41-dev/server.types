@@ -2,7 +2,7 @@ import { Repository, IRepositoryWritable, IPkName } from "./repository";
 
 export class RepositoryAMQP<T extends IPkName<T>> implements Repository<T>, IRepositoryWritable<T> {
   modelType: new (plainObj?: Partial<T> | undefined) => T;
-  
+
   constructor(modelType: new (plainObj?: Partial<T> | undefined) => T) {
     this.modelType = modelType;
   }
