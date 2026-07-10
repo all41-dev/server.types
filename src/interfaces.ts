@@ -33,7 +33,7 @@ export interface IUiOptions<T extends Ui<any>> extends IRouteOptions {
 
 export interface IAmqpOptions extends IMuteable {
   params: AMQP.Options.Connect;
-  connection?: AMQP.Connection;
+  connection?: AMQP.ChannelModel;
   channels: { [key: string]: AMQP.Channel };
 }
 
