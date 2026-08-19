@@ -5,10 +5,8 @@ import winston from 'winston';
 
 export function extractParamByKey(req: Request, key: string): string {
   const localKey = key || 'id';
-  const value = req.params?.[localKey as keyof typeof req.params] as string | string[] | undefined;
+  const value = req.params?.[localKey as keyof typeof req.params] as string | string[];
   const firstValue = Array.isArray(value) ? value[0] : value;
-
-  if (!firstValue) throw new Error(`Missing route param: ${localKey}`);
   return firstValue;
 }
 
