@@ -1,8 +1,11 @@
-import { DateTime } from "luxon";
-import { Response } from "express";
+import { DateTime } from 'luxon';
+import { Request, Response } from 'express';
 import { Model } from 'sequelize-typescript';
-import winston from "winston";
+import winston from 'winston';
 
+export function extractParamId(req: Request): string {
+  return Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+}
 
 export class Utils {
   private static _inst: Utils;
@@ -10,21 +13,22 @@ export class Utils {
 
   private constructor() {
     this.logger = winston.createLogger({
-      level: "info",
+      level: 'info',
       format: winston.format.json(),
       transports: [
         new winston.transports.Console({
-          format: winston.format.combine(
-            winston.format.colorize(),
-            winston.format.simple()
-          )
-        })
-      ]
+          format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
+        }),
+      ],
     });
   }
 
-  public static get inst(): Utils { return Utils._inst || (Utils._inst = new Utils()); }
-  public static get logger(): winston.Logger { return (Utils._inst || (Utils._inst = new Utils())).logger; }
+  public static get inst(): Utils {
+    return Utils._inst || (Utils._inst = new Utils());
+  }
+  public static get logger(): winston.Logger {
+    return (Utils._inst || (Utils._inst = new Utils())).logger;
+  }
 
   public dateToDateTime<T extends any | Array<any>>(obj: T): T {
     const localObj = obj as any;
