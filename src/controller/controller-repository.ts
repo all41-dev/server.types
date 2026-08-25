@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/member-ordering */
 import { Request, Response, Router } from 'express';
-import { ControllerBase, IControllerInstanceType, IRouteDefinition, ControllerAuthOptions } from './controller-base';
+import { ControllerBase, IControllerInstanceType, IRouteDefinition, ControllerAuthOptions, AuditHandler } from './controller-base';
 import { IPkName, IRepositoryReadable, IRepositoryWritable, Repository } from '../repository/repository';
 import { Utils } from '../utils';
 
@@ -8,13 +8,23 @@ export interface IControllerRepository<R extends Repository<T> & Partial<IReposi
   routes: IRouteDefinition[];
   create(repoType: R | (new () => R), router?: Router): Router;
 }
+
+function addUpdatedField(audit: AuditHandler | undefined, req: Request, body: any): any {
+  if (!audit || body === null || body === undefined) return body;
+  const userId = audit.extractUser(req);
+  const updatedByField = audit.updatedByField ?? 'updatedBy';
+  const result = { ...body };
+  result[updatedByField] = userId;
+  return result;
+}
+
 export class ControllerRepositoryReadWrite<R extends Repository<T> & IRepositoryReadable<T> & IRepositoryWritable<T>, T extends IPkName<T> = any> extends ControllerBase {
   private _repository!: R;
 
   constructor(options?: ControllerAuthOptions) {
     super(options);
     const readonly = new ControllerRepositoryReadonly<T, R>();
-    const writeonly = new ControllerRepositoryWriteonly<T, R>();
+    const writeonly = new ControllerRepositoryWriteonly<T, R>(options);
 
     const allBaseRoutes = [...readonly.routes, ...writeonly.routes];
 
@@ -22,11 +32,11 @@ export class ControllerRepositoryReadWrite<R extends Repository<T> & IRepository
       if (!this.options?.baseRouteCheckAuth || !this.options?.checkRouteMiddleware) return route;
       for (const entry of this.options.baseRouteCheckAuth) {
         if (entry.verb.toLowerCase() === route.verb.toLowerCase() && entry.path === route.path) {
-          route.featureCode = entry.featureCode
-          route.options = entry.options
+          route.featureCode = entry.featureCode;
+          route.options = entry.options;
         }
       }
-      return route
+      return route;
     });
 
     this.defineRoutes(...permissionedBaseRoutes);
@@ -50,10 +60,7 @@ export class ControllerRepositoryReadonly<T extends IPkName<T>, R extends Reposi
 
   public constructor() {
     super();
-    this.defineRoutes(
-      { verb: 'get', path: "/", handlers: this.getAll },
-      { verb: 'get', path: '/:id', handlers: this.getById },
-    );
+    this.defineRoutes({ verb: 'get', path: '/', handlers: this.getAll }, { verb: 'get', path: '/:id', handlers: this.getById });
   }
 
   public create(repoType: new () => R, router?: Router) {
@@ -66,7 +73,7 @@ export class ControllerRepositoryReadonly<T extends IPkName<T>, R extends Reposi
   public async getAll(req: Request, res: Response): Promise<void> {
     try {
       const include = req.query.include;
-      const where = req.query.filter;// TODO will probably not work "as is"
+      const where = req.query.filter; // TODO will probably not work "as is"
       const options = where || include ? { where, include } : undefined;
 
       const result = await (req as IControllerInstanceType<ControllerRepositoryReadonly<T, R>>)._this._repository.get(options);
@@ -92,13 +99,9 @@ export class ControllerRepositoryReadonly<T extends IPkName<T>, R extends Reposi
 export class ControllerRepositoryWriteonly<T extends IPkName<T>, R extends Repository<T> & IRepositoryWritable<T>> extends ControllerBase {
   private _repository!: R;
 
-  public constructor() {
-    super();
-    this.defineRoutes(
-      { verb: 'post', path: "/", handlers: this.post },
-      { verb: 'patch', path: "/:id", handlers: this.patch },
-      { verb: 'delete', path: "/:id", handlers: this.delete },
-    );
+  public constructor(options?: ControllerAuthOptions) {
+    super(options);
+    this.defineRoutes({ verb: 'post', path: '/', handlers: this.post }, { verb: 'patch', path: '/:id', handlers: this.patch }, { verb: 'delete', path: '/:id', handlers: this.delete });
   }
   public create(repoType: new () => R, router?: Router) {
     this._repository = new repoType();
@@ -109,10 +112,12 @@ export class ControllerRepositoryWriteonly<T extends IPkName<T>, R extends Repos
 
   public async post(req: Request, res: Response): Promise<void> {
     try {
+      const _this = (req as IControllerInstanceType<ControllerRepositoryWriteonly<T, R>>)._this;
       const include = req.query.include;
       const options = include ? { include } : undefined;
+      const body = addUpdatedField(_this.options?.auditHandler, req, req.body);
 
-      const result = await (req as IControllerInstanceType<ControllerRepositoryWriteonly<T, R>>)._this._repository.post(req.body, options);
+      const result = await _this._repository.post(body, options);
       res.json(result);
     } catch (err: unknown) {
       Utils.inst.handleCatch(err as Error, res);
@@ -121,10 +126,12 @@ export class ControllerRepositoryWriteonly<T extends IPkName<T>, R extends Repos
 
   public async patch(req: Request, res: Response): Promise<void> {
     try {
+      const _this = (req as IControllerInstanceType<ControllerRepositoryWriteonly<T, R>>)._this;
       const include = req.query.include;
       const options = include ? { include } : undefined;
+      const body = addUpdatedField(_this.options?.auditHandler, req, req.body);
 
-      const result = await (req as IControllerInstanceType<ControllerRepositoryWriteonly<T, R>>)._this._repository.patch(req.params.id, req.body, options);
+      const result = await _this._repository.patch(req.params.id, body, options);
       res.json(result);
     } catch (err: unknown) {
       Utils.inst.handleCatch(err as Error, res);

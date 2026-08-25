@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction, RequestHandler, Router } from 'express';
-import { ParsedQs } from "qs";
+import { ParsedQs } from 'qs';
 
 export interface IRouteDefinition {
   verb: 'all' | 'get' | 'post' | 'put' | 'delete' | 'patch' | 'options' | 'head';
   path: string;
   featureCode?: string;
   options?: Record<string, any>;
-  handlers: RequestHandler<any, any, any, ParsedQs, Record<string, any>> | Array<RequestHandler<any, any, any, ParsedQs, Record<string, any>>>
+  handlers: RequestHandler<any, any, any, ParsedQs, Record<string, any>> | Array<RequestHandler<any, any, any, ParsedQs, Record<string, any>>>;
 }
 export interface IControllerInstanceType<T> extends Request {
   _this: T;
@@ -19,9 +19,15 @@ export interface BaseRoutePermissionDefinition {
   options?: Record<string, any>;
 }
 
+export interface AuditHandler {
+  extractUser: (req: Request) => string;
+  updatedByField?: string;
+}
+
 export interface ControllerAuthOptions {
   checkRouteMiddleware?: (featureCode: string, options?: Record<string, any>) => RequestHandler;
   baseRouteCheckAuth?: BaseRoutePermissionDefinition[];
+  auditHandler?: AuditHandler;
 }
 
 export abstract class ControllerBase {
@@ -51,12 +57,11 @@ export abstract class ControllerBase {
   //   if (!foundRoute) throw new Error(`route ${verb}:${path} not found`);
   //   router[verb](path, foundRoute.handlers);
   // }
-  public defineRouteBeforeSignature(afterRoute: { verb: 'all' | 'get' | 'post' | 'put' | 'delete' | 'patch' | 'options' | 'head', path: string }, routeDef: IRouteDefinition): void {
+  public defineRouteBeforeSignature(afterRoute: { verb: 'all' | 'get' | 'post' | 'put' | 'delete' | 'patch' | 'options' | 'head'; path: string }, routeDef: IRouteDefinition): void {
     const foundRouteIdx = this.routes.findIndex((r) => r.verb === afterRoute.verb && r.path === afterRoute.path);
     if (foundRouteIdx === -1) throw new Error(`route ${afterRoute.verb}:${afterRoute.path} not found`);
     if (this.options?.checkRouteMiddleware) {
-      if (routeDef.featureCode)
-        routeDef.handlers = [this.options.checkRouteMiddleware(routeDef.featureCode, routeDef.options)].concat(routeDef.handlers)
+      if (routeDef.featureCode) routeDef.handlers = [this.options.checkRouteMiddleware(routeDef.featureCode, routeDef.options)].concat(routeDef.handlers);
     }
     this.routes.splice(foundRouteIdx, 0, routeDef);
   }
@@ -80,8 +85,7 @@ export abstract class ControllerBase {
 
     return usedRouter;
   }
-  private injectThis(handlers: RequestHandler<any, any, any, ParsedQs, Record<string, any>> | Array<RequestHandler<any, any, any, ParsedQs, Record<string, any>>>)
-    : RequestHandler<any, any, any, ParsedQs, Record<string, any>> | Array<RequestHandler<any, any, any, ParsedQs, Record<string, any>>> {
+  private injectThis(handlers: RequestHandler<any, any, any, ParsedQs, Record<string, any>> | Array<RequestHandler<any, any, any, ParsedQs, Record<string, any>>>): RequestHandler<any, any, any, ParsedQs, Record<string, any>> | Array<RequestHandler<any, any, any, ParsedQs, Record<string, any>>> {
     const localHandlers = Array.isArray(handlers) ? handlers : [handlers];
     const result = localHandlers.map((ctHhandler) => {
       const thisHandler = (req: Request, res: Response, next: NextFunction) => {
@@ -95,8 +99,7 @@ export abstract class ControllerBase {
   }
   private defineRoute(route: IRouteDefinition) {
     if (this.options?.checkRouteMiddleware) {
-      if (route.featureCode)
-        route.handlers = [this.options.checkRouteMiddleware(route.featureCode, route.options)].concat(route.handlers)
+      if (route.featureCode) route.handlers = [this.options.checkRouteMiddleware(route.featureCode, route.options)].concat(route.handlers);
     }
     const existingRoute = this.routes.find((r) => r.verb === route.verb && r.path === route.path);
     if (existingRoute) {
