@@ -5,7 +5,10 @@
   "main": "./dist/index.js",
   "types": "dist/index.d.ts",
   "private": false,
-  "repository": "https://github.com/all41-dev/server.types.git",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/all41-dev/server.types.git"
+  },
   "files": [
     "dist/**/*"
   ],
