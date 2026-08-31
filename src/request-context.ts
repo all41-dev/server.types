@@ -2,8 +2,8 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { NextFunction, Request, RequestHandler, Response } from 'express';
 
 export interface IRequestContextStore {
-  userId?: unknown;
   [key: string]: unknown;
+  userId?: unknown;
 }
 
 /**
@@ -14,17 +14,17 @@ export interface IRequestContextStore {
 export class RequestContext {
   private static readonly _storage = new AsyncLocalStorage<IRequestContextStore>();
 
-  /** Runs `fn` with `store` as the active context. */
-  public static run<T>(store: IRequestContextStore, fn: () => T): T {
-    return RequestContext._storage.run(store, fn);
-  }
-
   public static get store(): IRequestContextStore | undefined {
     return RequestContext._storage.getStore();
   }
 
   public static get userId(): unknown {
     return RequestContext._storage.getStore()?.userId;
+  }
+
+  /** Runs `fn` with `store` as the active context. */
+  public static run<T>(store: IRequestContextStore, fn: () => T): T {
+    return RequestContext._storage.run(store, fn);
   }
 
   public static set(key: string, value: unknown): void {

@@ -34,7 +34,7 @@ export interface IExtendedTableOptions<M extends Model = Model> extends TableOpt
  * export class DbRefreshToken extends Model<DbRefreshToken> { ... }
  * ```
  */
-export function Table<M extends Model = Model>(options: IExtendedTableOptions<M> = {} as IExtendedTableOptions<M>): Function {
+export function Table<M extends Model = Model>(options: IExtendedTableOptions<M> = {} as IExtendedTableOptions<M>): (target: any) => void {
   const { updatedBy = true, ...rest } = options;
   const decorateTable = SequelizeTable(rest as TableOptions<M>);
   return (target: any): void => {
