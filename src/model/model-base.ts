@@ -1,4 +1,4 @@
-import { Model, Table as SequelizeTable, TableOptions } from 'sequelize-typescript';
+import { Model, Table as SequelizeTable, TableOptions, Column, AllowNull, DataType } from 'sequelize-typescript';
 import { RequestContext } from '../request-context';
 
 /**
@@ -38,12 +38,29 @@ export function Table<M extends Model = Model>(options: IExtendedTableOptions<M>
   const { updatedBy = true, ...rest } = options;
   const decorateTable = SequelizeTable(rest as TableOptions<M>);
   return (target: any): void => {
-    decorateTable(target);
     if (updatedBy !== false) {
       const field = typeof updatedBy === 'string' ? updatedBy : 'updatedBy';
+      declareUpdatedByColumn(target, field);
+      decorateTable(target);
       installAuditHooks(target, field);
+    } else {
+      decorateTable(target);
     }
   };
+}
+
+function toSnakeCase(input: string): string {
+  return input.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+}
+
+function declareUpdatedByColumn(target: any, field: string): void {
+  const proto = target.prototype;
+  // Skip if the user already declared the column themselves.
+  const existing = (target.rawAttributes ?? {})[field];
+  if (existing) return;
+
+  AllowNull(true)(proto, field);
+  Column({ type: DataType.UUID, field: toSnakeCase(field) })(proto, field);
 }
 
 function installAuditHooks(model: any, field: string): void {
