@@ -41,32 +41,54 @@ export function Table<M extends Model = Model>(options: IExtendedTableOptions<M>
     decorateTable(target);
     if (updatedBy !== false) {
       const field = typeof updatedBy === 'string' ? updatedBy : 'updatedBy';
-      const originalInitialize = target.initialize;
-      target.initialize = function (this: any, attributes: any, initOptions: any): void {
-        originalInitialize.call(this, attributes, initOptions);
-        installAuditHooks(this, field);
-      };
+      installAuditHooks(target, field);
     }
   };
 }
 
 function installAuditHooks(model: any, field: string): void {
-  const hasField = (): boolean => field in ((model.rawAttributes ?? {}) as Record<string, unknown>);
+  const hasField = (): boolean => field in ((model.rawAttributes ?? model.getAttributes?.() ?? {}) as Record<string, unknown>);
 
   const stamp = (target: any): void => {
     const userId = RequestContext.userId;
     if (userId === undefined || userId === null) return;
     if (!hasField()) return;
-    target[field] = userId;
+    if (typeof target?.setDataValue === 'function') {
+      target.setDataValue(field, userId);
+    } else {
+      target[field] = userId;
+    }
   };
 
-  model.addHook('beforeCreate', (instance: any) => stamp(instance));
-  model.addHook('beforeUpdate', (instance: any) => stamp(instance));
-  model.addHook('beforeUpsert', (values: any) => stamp(values));
-  model.addHook('beforeBulkCreate', (instances: any[]) => instances.forEach(stamp));
+  const addHook = (name: string, fn: (...args: any[]) => void): void => {
+    if (typeof model.addHook === 'function') {
+      try {
+        model.addHook(name, fn);
+        return;
+      } catch {
+        /* fallthrough */
+      }
+    }
+    (model._pendingHooks ??= []).push({ name, fn });
+    if (!model._initPatched) {
+      model._initPatched = true;
+      const originalInit = model.init;
+      model.init = function (this: any, ...args: any[]): any {
+        const res = originalInit.apply(this, args);
+        for (const h of this._pendingHooks ?? []) this.addHook(h.name, h.fn);
+        this._pendingHooks = [];
+        return res;
+      };
+    }
+  };
 
-  // Model.update() path — mutate the shared `attributes` bag and register the field for write.
-  model.addHook('beforeBulkUpdate', (opts: any) => {
+  addHook('beforeCreate', (instance: any) => stamp(instance));
+  addHook('beforeUpdate', (instance: any) => stamp(instance));
+  addHook('beforeSave', (instance: any) => stamp(instance));
+  addHook('beforeUpsert', (values: any) => stamp(values));
+  addHook('beforeBulkCreate', (instances: any[]) => instances.forEach(stamp));
+
+  addHook('beforeBulkUpdate', (opts: any) => {
     const userId = RequestContext.userId;
     if (userId === undefined || userId === null) return;
     if (!hasField()) return;
