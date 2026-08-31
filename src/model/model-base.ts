@@ -49,16 +49,12 @@ export function Table<M extends Model = Model>(options: IExtendedTableOptions<M>
   };
 }
 
-function toSnakeCase(input: string): string {
-  return input.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
-}
-
 function declareUpdatedByColumn(target: any, field: string): void {
   const proto = target.prototype;
   const existing = (target.rawAttributes ?? {})[field];
   if (existing) return;
 
-  Column({ type: DataType.UUID, field: toSnakeCase(field) })(proto, field);
+  Column({ type: DataType.UUID })(proto, field);
   AllowNull(true)(proto, field);
 }
 
