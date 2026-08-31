@@ -17,9 +17,11 @@
     "lint": "eslint src/**",
     "test": "mocha -r ts-node/register src/**/*.spec.ts",
     "preversion": "run-p test lint build",
-    "postversion": "git push && git push --tags && npm publish --access public",
+    "postversion": "git push && git push --tags && node -e \"const v=require('./package.json').version;const t=v.includes('beta')?'beta':v.includes('alpha')?'alpha':'latest';require('child_process').execSync('npm publish --access public --tag '+t,{stdio:'inherit'})\"",
     "version:alpha": "npm version prerelease --preid=alpha",
-    "version:beta": "npm version prerelease --preid=beta"
+    "version:beta": "npm version prerelease --preid=beta",
+    "release:beta": "git push && git push --tags && npm publish --access public --tag beta",
+    "release": "git push && git push --tags && npm publish --access public"
   },
   "author": "",
   "license": "MIT",

@@ -40,7 +40,12 @@ export function Table<M extends Model = Model>(options: IExtendedTableOptions<M>
   return (target: any): void => {
     decorateTable(target);
     if (updatedBy !== false) {
-      installAuditHooks(target, typeof updatedBy === 'string' ? updatedBy : 'updatedBy');
+      const field = typeof updatedBy === 'string' ? updatedBy : 'updatedBy';
+      const originalInitialize = target.initialize;
+      target.initialize = function (this: any, attributes: any, initOptions: any): void {
+        originalInitialize.call(this, attributes, initOptions);
+        installAuditHooks(this, field);
+      };
     }
   };
 }
