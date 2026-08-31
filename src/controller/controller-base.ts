@@ -19,15 +19,9 @@ export interface BaseRoutePermissionDefinition {
   options?: Record<string, any>;
 }
 
-export interface AuditHandler {
-  extractUser: (req: Request) => string;
-  updatedByField?: string;
-}
-
 export interface ControllerAuthOptions {
   checkRouteMiddleware?: (featureCode: string, options?: Record<string, any>) => RequestHandler;
   baseRouteCheckAuth?: BaseRoutePermissionDefinition[];
-  auditHandler?: AuditHandler;
 }
 
 export abstract class ControllerBase {

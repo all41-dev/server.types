@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/member-ordering */
 import { Request, Response, Router } from 'express';
-import { ControllerBase, IControllerInstanceType, IRouteDefinition, ControllerAuthOptions, AuditHandler } from './controller-base';
+import { ControllerBase, IControllerInstanceType, IRouteDefinition, ControllerAuthOptions } from './controller-base';
 import { IPkName, IRepositoryReadable, IRepositoryWritable, Repository } from '../repository/repository';
 import { Utils } from '../utils';
 
@@ -9,22 +9,13 @@ export interface IControllerRepository<R extends Repository<T> & Partial<IReposi
   create(repoType: R | (new () => R), router?: Router): Router;
 }
 
-function addUpdatedField(audit: AuditHandler | undefined, req: Request, body: any): any {
-  if (!audit || body === null || body === undefined) return body;
-  const userId = audit.extractUser(req);
-  const updatedByField = audit.updatedByField ?? 'updatedBy';
-  const result = { ...body };
-  result[updatedByField] = userId;
-  return result;
-}
-
 export class ControllerRepositoryReadWrite<R extends Repository<T> & IRepositoryReadable<T> & IRepositoryWritable<T>, T extends IPkName<T> = any> extends ControllerBase {
   private _repository!: R;
 
   constructor(options?: ControllerAuthOptions) {
     super(options);
     const readonly = new ControllerRepositoryReadonly<T, R>();
-    const writeonly = new ControllerRepositoryWriteonly<T, R>(options);
+    const writeonly = new ControllerRepositoryWriteonly<T, R>();
 
     const allBaseRoutes = [...readonly.routes, ...writeonly.routes];
 
@@ -115,9 +106,8 @@ export class ControllerRepositoryWriteonly<T extends IPkName<T>, R extends Repos
       const _this = (req as IControllerInstanceType<ControllerRepositoryWriteonly<T, R>>)._this;
       const include = req.query.include;
       const options = include ? { include } : undefined;
-      const body = addUpdatedField(_this.options?.auditHandler, req, req.body);
 
-      const result = await _this._repository.post(body, options);
+      const result = await _this._repository.post(req.body, options);
       res.json(result);
     } catch (err: unknown) {
       Utils.inst.handleCatch(err as Error, res);
@@ -129,9 +119,8 @@ export class ControllerRepositoryWriteonly<T extends IPkName<T>, R extends Repos
       const _this = (req as IControllerInstanceType<ControllerRepositoryWriteonly<T, R>>)._this;
       const include = req.query.include;
       const options = include ? { include } : undefined;
-      const body = addUpdatedField(_this.options?.auditHandler, req, req.body);
 
-      const result = await _this._repository.patch(req.params.id, body, options);
+      const result = await _this._repository.patch(req.params.id, req.body, options);
       res.json(result);
     } catch (err: unknown) {
       Utils.inst.handleCatch(err as Error, res);

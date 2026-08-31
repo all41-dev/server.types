@@ -4,7 +4,9 @@ export * from './repository/repository';
 export * from './repository/repository-messaging';
 export * from './repository/repository-amqp';
 export * from './repository/repository-sequelize';
-export * from "./workflow/workflow"
+export * from './model/model-base';
+export * from './request-context';
+export * from './workflow/workflow';
 export * from './utils';
 export * from './api';
 export * from './interfaces';
