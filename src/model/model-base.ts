@@ -55,12 +55,11 @@ function toSnakeCase(input: string): string {
 
 function declareUpdatedByColumn(target: any, field: string): void {
   const proto = target.prototype;
-  // Skip if the user already declared the column themselves.
   const existing = (target.rawAttributes ?? {})[field];
   if (existing) return;
 
-  AllowNull(true)(proto, field);
   Column({ type: DataType.UUID, field: toSnakeCase(field) })(proto, field);
+  AllowNull(true)(proto, field);
 }
 
 function installAuditHooks(model: any, field: string): void {
