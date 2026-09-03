@@ -1,6 +1,21 @@
 import { Model, Table as SequelizeTable, TableOptions, Column, AllowNull, DataType, getAttributes } from 'sequelize-typescript';
 import { RequestContext } from '../request-context';
 
+export type ModelClass<M extends Model = Model> = (new () => M) & typeof Model;
+
+let _userModel: ModelClass | null = null;
+
+export function setUserTable(model: ModelClass): void {
+  _userModel = model;
+}
+
+export function getUserTable(): ModelClass {
+  if (!_userModel) {
+    throw new Error('[model-base] User table is not registered. ' + 'Call setUserTable(UserTable) before sequelize.addModels() / DB init.');
+  }
+  return _userModel;
+}
+
 interface IAuditedModelStatic {
   rawAttributes?: Record<string, unknown>;
   getAttributes?: () => Record<string, unknown>;
@@ -14,18 +29,6 @@ interface IAuditedModelStatic {
 }
 
 export interface IExtendedTableOptions<M extends Model = Model> extends TableOptions<M> {
-  /**
-   * Same shape as Sequelize's `updatedAt`:
-   *   `true`   → stamp the column named `'updatedBy'` (default)
-   *   `false`  → disabled
-   *   `string` → stamp a column of that name
-   *
-   * When the model author did not already declare the column it is added
-   * automatically (a nullable UUID). A pre-existing declaration (any type,
-   * custom db `field`, ...) is kept as-is. The hooks silently no-op when
-   * there is no ambient {@link RequestContext} user, or when the field
-   * somehow isn't present on the model.
-   */
   updatedBy?: boolean | string;
 }
 
