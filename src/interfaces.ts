@@ -15,7 +15,7 @@ export interface IApiOptions<T extends Api<any>> extends IRouteOptions {
 }
 
 export interface IJobOptions extends IMuteable {
-  schedule: string;
+  schedule?: string;
   function: () => any;
   name: string;
   code: string;
